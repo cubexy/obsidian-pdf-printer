@@ -1,11 +1,10 @@
 {
-	"id": "pdf-annotator",
-	"name": "PDF Annotator",
-	"version": "0.0.1",
+	"id": "obsidian-pdf-printer",
+	"name": "PDF Printer",
+	"version": "0.1.0",
 	"minAppVersion": "0.15.0",
-	"description": "A tool that allows greater annotation of PDFs.",
-	"author": "Obsidian",
+	"description": "Convert your PDF notes/files to images without external dependencies.",
+	"author": "cubexy",
 	"authorUrl": "https://github.com/cubexy",
-	"fundingUrl": "https://www.tierschutzbund.de/helfen/spenden/jetzt-spenden/",
-	"isDesktopOnly": true
+	"isDesktopOnly": false
 }

@@ -1,7 +1,7 @@
 {
-	"name": "obsidian-sample-plugin",
-	"version": "1.0.0",
-	"description": "This is a sample plugin for Obsidian (https://obsidian.md)",
+	"name": "obsidian-pdf-printer",
+	"version": "0.1.0",
+	"description": "Convert your PDF notes/files to images without external dependencies.",
 	"main": "main.js",
 	"scripts": {
 		"dev": "node esbuild.config.mjs",
