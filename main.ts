@@ -11,6 +11,7 @@ import {
 	TFile,
 	loadPdfJs,
 } from "obsidian";
+import { v4 as uuidv4 } from "uuid";
 
 interface PdfPrinterSettings {
 	imageFolder: string;
@@ -200,13 +201,13 @@ export default class PdfPrinterPlugin extends Plugin {
 	private async convertPdfBufferToImages(
 		pdfBuffer: PdfDocumentBuffer
 	): Promise<string[]> {
-		let uuid = crypto.randomUUID();
+		let uuid = uuidv4();
 		while (
 			await this.app.vault.adapter.exists(
 				`${this.settings.imageFolder}/${uuid}`
 			)
 		) {
-			uuid = crypto.randomUUID(); // if folder already exists (???), generate a new uuid
+			uuid = uuidv4(); // if folder already exists (???), generate a new uuid
 		}
 		await this.app.vault.createFolder(
 			`${this.settings.imageFolder}/${uuid}`
