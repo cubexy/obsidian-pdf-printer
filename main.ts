@@ -3,7 +3,6 @@ import {
 	App,
 	Editor,
 	MarkdownView,
-	Modal,
 	Notice,
 	Plugin,
 	PluginSettingTab,
@@ -41,7 +40,6 @@ export default class MyPlugin extends Plugin {
 		const statusBarItemEl = this.addStatusBarItem();
 		statusBarItemEl.setText("Status Bar Text");
 
-		// This adds an editor command that can perform some operation on the current editor instance
 		this.addCommand({
 			id: "convert-pdf-to-images",
 			name: "Convert PDF to images",
@@ -58,7 +56,9 @@ export default class MyPlugin extends Plugin {
 				});
 
 				editor.replaceSelection(
-					imagePathList.map((f) => `![[${f}]]`).join("\n")
+					imagePathList
+						.map((imagePath) => `![[${imagePath}]]`)
+						.join("\n")
 				);
 			},
 		});
@@ -195,14 +195,12 @@ export default class MyPlugin extends Plugin {
 	private async convertPDFBufferToImages(
 		pdfBuffer: PDFDocumentBuffer
 	): Promise<string[]> {
-		const pngFilePaths: string[] = [];
-		for (const page of pdfBuffer.pages) {
-			const pngFileName = `${pdfBuffer.fileName}-${page.pageNumber}.png`;
-			const pngFilePath = `${pngFileName}`;
-			await this.app.vault.createBinary(pngFilePath, page.buffer);
-			pngFilePaths.push(pngFilePath);
-		}
-		return pngFilePaths;
+		const writeTasks = pdfBuffer.pages.map(async (page) => {
+			const name = `${pdfBuffer.fileName}-${page.pageNumber}.png`;
+			await this.app.vault.createBinary(name, page.buffer);
+			return name;
+		});
+		return Promise.all(writeTasks);
 	}
 }
 
