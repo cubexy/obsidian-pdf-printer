@@ -1,6 +1,6 @@
 {
 	"name": "obsidian-pdf-printer",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"description": "Convert your PDF notes/files to images without external dependencies.",
 	"main": "main.js",
 	"scripts": {

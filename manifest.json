@@ -1,7 +1,7 @@
 {
 	"id": "obsidian-pdf-printer",
 	"name": "PDF Printer",
-	"version": "1.0.2",
+	"version": "1.0.3",
 	"minAppVersion": "1.8.9",
 	"description": "Convert PDF documents to images directly in your notes without external dependencies.",
 	"author": "cubexy",
