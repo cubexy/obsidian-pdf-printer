@@ -1,4 +1,5 @@
-import { NodeCanvasFactory } from "canvasFactory";
+import { NodeCanvasFactory } from "utils/canvas/canvasFactory";
+import { FolderSuggest } from "utils/suggest/folderSuggest";
 import {
 	App,
 	Editor,
@@ -11,34 +12,31 @@ import {
 	loadPdfJs,
 } from "obsidian";
 
-interface PDFPrinterSettings {
-	mySetting: string;
+interface PdfPrinterSettings {
+	imageFolder: string;
+	imageQuality: number;
 }
 
-const DEFAULT_SETTINGS: PDFPrinterSettings = {
-	mySetting: "default",
+const DEFAULT_SETTINGS: PdfPrinterSettings = {
+	imageFolder: "",
+	imageQuality: 0.5,
 };
 
-type PDFDocumentBuffer = {
+type PdfDocumentBuffer = {
 	fileName: string;
-	pages: PDFPage[];
+	pages: PdfPage[];
 };
 
-type PDFPage = {
+type PdfPage = {
 	pageNumber: number;
 	buffer: ArrayBuffer;
 };
 
-export default class MyPlugin extends Plugin {
-	settings: PDFPrinterSettings;
+export default class PdfPrinterPlugin extends Plugin {
+	settings: PdfPrinterSettings;
 
 	async onload() {
-		console.log("loading plugin");
 		await this.loadSettings();
-
-		// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
-		const statusBarItemEl = this.addStatusBarItem();
-		statusBarItemEl.setText("Status Bar Text");
 
 		this.addCommand({
 			id: "convert-pdf-to-images",
@@ -49,27 +47,35 @@ export default class MyPlugin extends Plugin {
 				if (!pdfFile) {
 					return;
 				}
-				const fileBufferArray = await this.parsePDF(pdfFile);
-				const imagePathList = await this.convertPDFBufferToImages({
-					fileName: pdfFile.name,
+				new Notice(`Printing document '${pdfFile.name}'...`);
+				const fileBufferArray = await this.parsePdf(pdfFile);
+				const imagePathList = await this.convertPdfBufferToImages({
+					fileName: pdfFile.basename,
 					pages: fileBufferArray,
 				});
+
+				if (imagePathList.length === 0) {
+					new Notice(
+						"No images could be generated from the document."
+					);
+					return;
+				}
 
 				editor.replaceSelection(
 					imagePathList
 						.map((imagePath) => `![[${imagePath}]]`)
 						.join("\n")
 				);
+
+				new Notice(
+					`Document '${pdfFile.name}' was printed successfully.`
+				);
 			},
 		});
-
-		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new PdfPrinterSettingsTab(this.app, this));
 	}
 
-	onunload() {
-		console.log("unloading pdf printer plugin");
-	}
+	onunload() {}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -98,16 +104,6 @@ export default class MyPlugin extends Plugin {
 	}
 
 	/**
-	 * Takes the path of a file and returns the TFile object if it exists in the vault.
-	 * If the file is not found, it returns null.
-	 * @param path path to the file (either just the name or the full path)
-	 * @returns File object if it exists, null otherwise
-	 */
-	private fetchVaultFile(path: string): TFile | null {
-		return this.app.metadataCache.getFirstLinkpathDest(path, "");
-	}
-
-	/**
 	 * attempts to parse a string as a file path
 	 * @param input the string to parse
 	 * @returns the file if it is a valid file path, null otherwise
@@ -125,7 +121,7 @@ export default class MyPlugin extends Plugin {
 			);
 			return null;
 		}
-		const file = this.fetchVaultFile(filePath);
+		const file = this.app.metadataCache.getFirstLinkpathDest(filePath, "");
 		if (!file) {
 			new Notice(`File not found: ${filePath}.`);
 			return null;
@@ -145,14 +141,14 @@ export default class MyPlugin extends Plugin {
 	 * @throws Error if the canvas or context cannot be created.
 	 * @returns An array of strings representing the paths of the saved PNG images.
 	 */
-	async parsePDF(file: TFile): Promise<PDFPage[]> {
+	async parsePdf(file: TFile): Promise<PdfPage[]> {
 		const pdfjs = await loadPdfJs();
 		const arrayBuffer = await this.app.vault.adapter.readBinary(file.path);
 		const buffer = new Uint8Array(arrayBuffer);
 		const document = await pdfjs.getDocument(buffer).promise;
 
 		const pages: number = document.numPages;
-		let pdfBuffer: PDFPage[] = [];
+		let pdfBuffer: PdfPage[] = [];
 
 		for (let i = 1; i <= pages; i++) {
 			const page = await document.getPage(i);
@@ -164,23 +160,32 @@ export default class MyPlugin extends Plugin {
 				false
 			);
 			if (!canvas || !context) {
-				console.error("could not generate canvas or context");
+				console.error(
+					"pdf-printer: could not generate canvas or context"
+				);
 				return [];
 			}
 			await page.render({ canvasContext: context, viewport }).promise;
 			const blob = await new Promise<Blob | null>((resolve) => {
 				/** @ts-ignore because toBlob exists, but is not found */
-				canvas.toBlob(resolve, "image/png");
+				canvas.toBlob(
+					resolve,
+					"image/webp",
+					this.settings.imageQuality
+				);
 			});
 
 			if (blob) {
 				pdfBuffer.push({
 					pageNumber: i,
-					buffer: await blob.arrayBuffer(), // Store base64 string (binary data)
+					buffer: await blob.arrayBuffer(),
 				});
 			} else {
-				console.error(`could not generate blob for page ${i}`);
+				console.error(
+					`pdf-printer: could not generate blob for page ${i}`
+				);
 			}
+			canvasFactory.destroy({ canvas, context });
 		}
 
 		return pdfBuffer;
@@ -192,42 +197,74 @@ export default class MyPlugin extends Plugin {
 	 * @param pageNumber The page number of the PDF.
 	 * @returns The path of the saved PNG file.
 	 */
-	private async convertPDFBufferToImages(
-		pdfBuffer: PDFDocumentBuffer
+	private async convertPdfBufferToImages(
+		pdfBuffer: PdfDocumentBuffer
 	): Promise<string[]> {
+		let uuid = crypto.randomUUID();
+		while (
+			await this.app.vault.adapter.exists(
+				`${this.settings.imageFolder}/${uuid}`
+			)
+		) {
+			// if folder already exists, generate a new uuid
+			uuid = crypto.randomUUID();
+		}
+		await this.app.vault.createFolder(
+			`${this.settings.imageFolder}/${uuid}`
+		);
 		const writeTasks = pdfBuffer.pages.map(async (page) => {
-			const name = `${pdfBuffer.fileName}-${page.pageNumber}.png`;
-			await this.app.vault.createBinary(name, page.buffer);
-			return name;
+			const fileName = `${pdfBuffer.fileName}-${page.pageNumber}.webp`;
+			const fullPath = `${this.settings.imageFolder}/${uuid}/${fileName}`;
+			await this.app.vault.createBinary(fullPath, page.buffer);
+			return fileName;
 		});
 		return Promise.all(writeTasks);
 	}
 }
 
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
+class PdfPrinterSettingsTab extends PluginSettingTab {
+	plugin: PdfPrinterPlugin;
 
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: PdfPrinterPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
 
 	display(): void {
 		const { containerEl } = this;
-
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Setting #1")
-			.setDesc("It's a secret")
-			.addText((text) =>
-				text
-					.setPlaceholder("Enter your secret")
-					.setValue(this.plugin.settings.mySetting)
+			.setName("Image quality")
+			.setDesc(
+				"Quality of the printed images. Higher values result in better quality but larger file sizes."
+			)
+			.addSlider((cb) => {
+				cb.setLimits(0, 1, 0.01)
+					.setValue(this.plugin.settings.imageQuality)
+					.setDynamicTooltip()
 					.onChange(async (value) => {
-						this.plugin.settings.mySetting = value;
+						this.plugin.settings.imageQuality = value;
 						await this.plugin.saveSettings();
-					})
-			);
+					});
+			});
+
+		new Setting(this.containerEl)
+			.setName("Printed image folder path")
+			.setDesc("Place printed images from PDFs in this folder.")
+			.addSearch((cb) => {
+				new FolderSuggest(this.app, cb.inputEl);
+				cb.setPlaceholder("Example: folder1/folder2")
+					.setValue(this.plugin.settings.imageFolder)
+					.onChange(async (new_folder) => {
+						new_folder = new_folder.trim();
+						new_folder = new_folder.replace(/\/$/, "");
+
+						this.plugin.settings.imageFolder = new_folder;
+						await this.plugin.saveSettings();
+					});
+				/** @ts-ignore */
+				cb.containerEl.addClass("templater_search");
+			});
 	}
 }
