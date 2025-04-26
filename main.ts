@@ -206,8 +206,7 @@ export default class PdfPrinterPlugin extends Plugin {
 				`${this.settings.imageFolder}/${uuid}`
 			)
 		) {
-			// if folder already exists, generate a new uuid
-			uuid = crypto.randomUUID();
+			uuid = crypto.randomUUID(); // if folder already exists (???), generate a new uuid
 		}
 		await this.app.vault.createFolder(
 			`${this.settings.imageFolder}/${uuid}`
