@@ -1,5 +1,4 @@
-import { NodeCanvasFactory } from "utils/canvas/canvasFactory";
-import { FolderSuggest } from "utils/suggest/folderSuggest";
+import { BrowserCanvasFactory } from "utils/canvas/canvasFactory";
 import {
 	App,
 	Editor,
@@ -10,8 +9,10 @@ import {
 	Setting,
 	TFile,
 	loadPdfJs,
+	normalizePath,
 } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
+import { FolderSuggest } from "utils/suggest/folderSuggest";
 
 interface PdfPrinterSettings {
 	imageFolder: string;
@@ -144,7 +145,7 @@ export default class PdfPrinterPlugin extends Plugin {
 	 */
 	async parsePdf(file: TFile): Promise<PdfPage[]> {
 		const pdfjs = await loadPdfJs();
-		const arrayBuffer = await this.app.vault.adapter.readBinary(file.path);
+		const arrayBuffer = await this.app.vault.readBinary(file);
 		const buffer = new Uint8Array(arrayBuffer);
 		const document = await pdfjs.getDocument(buffer).promise;
 
@@ -154,7 +155,7 @@ export default class PdfPrinterPlugin extends Plugin {
 		for (let i = 1; i <= pages; i++) {
 			const page = await document.getPage(i);
 			const viewport = page.getViewport({ scale: 2 });
-			const canvasFactory = new NodeCanvasFactory();
+			const canvasFactory = new BrowserCanvasFactory();
 			const { canvas, context } = canvasFactory.create(
 				viewport.width,
 				viewport.height,
@@ -203,9 +204,9 @@ export default class PdfPrinterPlugin extends Plugin {
 	): Promise<string[]> {
 		let uuid = uuidv4();
 		while (
-			await this.app.vault.adapter.exists(
+			this.app.vault.getFileByPath(
 				`${this.settings.imageFolder}/${uuid}`
-			)
+			) !== null
 		) {
 			uuid = uuidv4(); // if folder already exists (???), generate a new uuid
 		}
@@ -257,14 +258,10 @@ class PdfPrinterSettingsTab extends PluginSettingTab {
 				cb.setPlaceholder("Example: folder1/folder2")
 					.setValue(this.plugin.settings.imageFolder)
 					.onChange(async (new_folder) => {
-						new_folder = new_folder.trim();
-						new_folder = new_folder.replace(/\/$/, "");
-
-						this.plugin.settings.imageFolder = new_folder;
+						this.plugin.settings.imageFolder =
+							normalizePath(new_folder);
 						await this.plugin.saveSettings();
 					});
-				/** @ts-ignore */
-				cb.containerEl.addClass("templater_search");
 			});
 	}
 }

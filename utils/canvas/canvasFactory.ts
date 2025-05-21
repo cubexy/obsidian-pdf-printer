@@ -1,19 +1,19 @@
-import { Canvas, createCanvas, CanvasRenderingContext2D } from "canvas";
-
 type CanvasWithContext = {
-	canvas: Canvas | null;
+	canvas: HTMLCanvasElement | null;
 	context: CanvasRenderingContext2D | null;
 };
 
-export class NodeCanvasFactory {
+export class BrowserCanvasFactory {
 	create(
 		width: number,
 		height: number,
 		transparent: boolean
 	): CanvasWithContext {
-		const canvas = createCanvas(width, height);
+		const canvas = document.createElement("canvas");
+		canvas.width = width;
+		canvas.height = height;
 		const context = canvas.getContext("2d", { alpha: transparent });
-		if (transparent) context.clearRect(0, 0, width, height);
+		if (transparent && context) context.clearRect(0, 0, width, height);
 		return {
 			canvas,
 			context,
