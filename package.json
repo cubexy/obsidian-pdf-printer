@@ -1,6 +1,6 @@
 {
 	"name": "pdf-printer",
-	"version": "1.0.8",
+	"version": "1.0.9",
 	"description": "Convert your PDF notes/files to images without external dependencies.",
 	"main": "main.js",
 	"scripts": {
