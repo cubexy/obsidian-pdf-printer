@@ -13,6 +13,12 @@ PDF Printer is an Obsidian plugin that converts PDF documents in your vault into
 
 ## Installation
 
+### Direct installation
+
+PDF Printer was added to the official community plugins! Just search for "PDF Printer" in Obsidian's "Community Plugins" tab.
+
+### Manual install
+
 1. Copy the project files into your vault's `.obsidian/plugins/pdf-printer/` folder
 2. Restart (or reload) Obsidian
 3. Enable **PDF Printer** in Settings > Community plugins

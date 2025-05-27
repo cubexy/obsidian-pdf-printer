@@ -1,7 +1,7 @@
 {
 	"id": "pdf-printer",
 	"name": "PDF Printer",
-	"version": "1.0.4",
+	"version": "1.0.8",
 	"minAppVersion": "1.8.9",
 	"description": "Convert PDF documents to images directly in your notes without external dependencies.",
 	"author": "cubexy",
