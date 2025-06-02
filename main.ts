@@ -1,38 +1,15 @@
 import { BrowserCanvasFactory } from "utils/canvas/canvasFactory";
 import {
-	App,
 	Editor,
 	MarkdownView,
 	Notice,
 	Plugin,
-	PluginSettingTab,
-	Setting,
 	TFile,
 	loadPdfJs,
-	normalizePath,
 } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
-import { FolderSuggest } from "utils/suggest/folderSuggest";
-
-interface PdfPrinterSettings {
-	imageFolder: string;
-	imageQuality: number;
-}
-
-const DEFAULT_SETTINGS: PdfPrinterSettings = {
-	imageFolder: "",
-	imageQuality: 0.5,
-};
-
-type PdfDocumentBuffer = {
-	fileName: string;
-	pages: PdfPage[];
-};
-
-type PdfPage = {
-	pageNumber: number;
-	buffer: ArrayBuffer;
-};
+import { DEFAULT_SETTINGS, PdfPrinterSettingsTab } from "modules/settings";
+import { PdfDocumentBuffer, PdfPage, PdfPrinterSettings } from "modules/types";
 
 export default class PdfPrinterPlugin extends Plugin {
 	settings: PdfPrinterSettings;
@@ -63,11 +40,20 @@ export default class PdfPrinterPlugin extends Plugin {
 					return;
 				}
 
-				editor.replaceSelection(
-					imagePathList
-						.map((imagePath) => `![[${imagePath}]]`)
-						.join("\n")
-				);
+				const imageLinks = imagePathList
+					.map((imagePath) =>
+						this.settings.imageEmbedFormat.replace(
+							"${filename}",
+							imagePath
+						)
+					)
+					.join("\n");
+
+				const replacementText = this.settings.preservePdfLink
+					? `[[${pdfFile.path}]]\n${imageLinks}`
+					: `\n${imageLinks}`;
+
+				editor.replaceSelection(replacementText);
 
 				new Notice(
 					`Document '${pdfFile.name}' was printed successfully.`
@@ -76,8 +62,6 @@ export default class PdfPrinterPlugin extends Plugin {
 		});
 		this.addSettingTab(new PdfPrinterSettingsTab(this.app, this));
 	}
-
-	onunload() {}
 
 	async loadSettings() {
 		this.settings = Object.assign(
@@ -220,48 +204,5 @@ export default class PdfPrinterPlugin extends Plugin {
 			return fileName;
 		});
 		return Promise.all(writeTasks);
-	}
-}
-
-class PdfPrinterSettingsTab extends PluginSettingTab {
-	plugin: PdfPrinterPlugin;
-
-	constructor(app: App, plugin: PdfPrinterPlugin) {
-		super(app, plugin);
-		this.plugin = plugin;
-	}
-
-	display(): void {
-		const { containerEl } = this;
-		containerEl.empty();
-
-		new Setting(containerEl)
-			.setName("Image quality")
-			.setDesc(
-				"Quality of the printed images. Higher values result in better quality but larger file sizes."
-			)
-			.addSlider((cb) => {
-				cb.setLimits(0, 1, 0.01)
-					.setValue(this.plugin.settings.imageQuality)
-					.setDynamicTooltip()
-					.onChange(async (value) => {
-						this.plugin.settings.imageQuality = value;
-						await this.plugin.saveSettings();
-					});
-			});
-
-		new Setting(this.containerEl)
-			.setName("Printed image folder path")
-			.setDesc("Place printed images from PDFs in this folder.")
-			.addSearch((cb) => {
-				new FolderSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("Example: folder1/folder2")
-					.setValue(this.plugin.settings.imageFolder)
-					.onChange(async (new_folder) => {
-						this.plugin.settings.imageFolder =
-							normalizePath(new_folder);
-						await this.plugin.saveSettings();
-					});
-			});
 	}
 }
