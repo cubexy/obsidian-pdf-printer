@@ -17,11 +17,15 @@ import { FolderSuggest } from "utils/suggest/folderSuggest";
 interface PdfPrinterSettings {
 	imageFolder: string;
 	imageQuality: number;
+	imageEmbedFormat: string;
+	preservePdfLink: boolean;
 }
 
 const DEFAULT_SETTINGS: PdfPrinterSettings = {
 	imageFolder: "",
 	imageQuality: 0.5,
+	imageEmbedFormat: "![[${filename}]]",
+	preservePdfLink: false,
 };
 
 type PdfDocumentBuffer = {
@@ -63,11 +67,20 @@ export default class PdfPrinterPlugin extends Plugin {
 					return;
 				}
 
-				editor.replaceSelection(
-					imagePathList
-						.map((imagePath) => `![[${imagePath}]]`)
-						.join("\n")
-				);
+				const imageLinks = imagePathList
+					.map((imagePath) =>
+						this.settings.imageEmbedFormat.replace(
+							"${filename}",
+							imagePath
+						)
+					)
+					.join("\n");
+
+				const replacementText = this.settings.preservePdfLink
+					? `[[${pdfFile.path}]]\n${imageLinks}`
+					: `\n${imageLinks}`;
+
+				editor.replaceSelection(replacementText);
 
 				new Notice(
 					`Document '${pdfFile.name}' was printed successfully.`
@@ -260,6 +273,34 @@ class PdfPrinterSettingsTab extends PluginSettingTab {
 					.onChange(async (new_folder) => {
 						this.plugin.settings.imageFolder =
 							normalizePath(new_folder);
+						await this.plugin.saveSettings();
+					});
+			});
+
+		new Setting(this.containerEl)
+			.setName("Show link to original PDF above printed images")
+			.setDesc(
+				"Keep a link to the original PDF above the printed images as a reference."
+			)
+			.addToggle((cb) => {
+				cb.setValue(this.plugin.settings.preservePdfLink).onChange(
+					async (value) => {
+						this.plugin.settings.preservePdfLink = value;
+						await this.plugin.saveSettings();
+					}
+				);
+			});
+
+		new Setting(this.containerEl)
+			.setName("Image embed format")
+			.setDesc(
+				"Format for embedding images in the markdown file. Use ${filename} as a placeholder for the image file name."
+			)
+			.addText((cb) => {
+				cb.setPlaceholder("![[${filename}]]")
+					.setValue(this.plugin.settings.imageEmbedFormat)
+					.onChange(async (value) => {
+						this.plugin.settings.imageEmbedFormat = value;
 						await this.plugin.saveSettings();
 					});
 			});
