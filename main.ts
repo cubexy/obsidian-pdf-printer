@@ -82,7 +82,7 @@ export default class PdfPrinterPlugin extends Plugin {
 	 * @returns found file path (something) or null
 	 */
 	private checkPathInput(input: string): string | null {
-		const matches = input.match(/!\[\[([^\]]+)\]\]/); // match ![[something]], -> something (capture group 1)
+		const matches = input.match(/!\[\[(.+?)\]\]/); // match ![[something]], -> something (capture group 1)
 		if (matches && matches[1]) {
 			return matches[1];
 		}
@@ -134,7 +134,7 @@ export default class PdfPrinterPlugin extends Plugin {
 		const document = await pdfjs.getDocument(buffer).promise;
 
 		const pages: number = document.numPages;
-		let pdfBuffer: PdfPage[] = [];
+		const pdfBuffer: PdfPage[] = [];
 
 		for (let i = 1; i <= pages; i++) {
 			const page = await document.getPage(i);
