@@ -1,12 +1,10 @@
 <h1 align="center">Obsidian PDF Printer</h1>
 <p align="center">
-<img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/cubexy/obsidian-pdf-printer/total">
+<img src="https://badgen.net/github/assets-dl/cubexy/obsidian-pdf-printer?icon=github&color=blue" alt="Downloads">
 <img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/cubexy/obsidian-pdf-printer">
 <img alt="GitHub Issues or Pull Requests" src="https://img.shields.io/github/issues/cubexy/obsidian-pdf-printer">
 <img alt="TypeScript badge" src="https://shields.io/badge/TypeScript-3178C6?logo=TypeScript&logoColor=FFF&style=flat-square">
 </p>
-
-[![Downloads](https://badgen.net/github/assets-dl/cubexy/obsidian-pdf-printer?icon=github&color=blue)](https://github.com/cubexy/obsidian-pdf-printer/releases)
 
 **PDF Printer** is a plugin for the Obsidian editor that converts PDF documents in your vault into images, making it easy to embed and annotate PDF content directly in your notes.
 
