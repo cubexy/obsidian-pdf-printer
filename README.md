@@ -12,10 +12,10 @@
 
 ## Features
 
--   Convert PDF documents into WEBP images inside Obsidian
--   Batch conversion of multi-page PDFs
--   Simple command to trigger conversion
--   User-definable image quality
+- Convert PDF documents into WEBP images inside Obsidian
+- Batch conversion of multi-page PDFs
+- Simple command to trigger conversion
+- User-definable image quality
 
 ## Installation
 
@@ -37,10 +37,10 @@ PDF Printer was added to the official community plugins! Just search for "PDF Pr
 
 ## Configuration
 
--   **Image quality** can be set from 0 (lowest) to 1 (highest) in the settings. A lower value reduces image quality, but also decreases file size.
--   A folder for **printed images** can be set to better organize your vault.
--   A **link to the printed PDF file** can be shown above the printed pages.
--   The **format for embedded images** can be set to allow for custom image widths and integrations with more specific workflows.
+- **Image quality** can be set from 0 (lowest) to 1 (highest) in the settings. A lower value reduces image quality, but also decreases file size.
+- A folder for **printed images** can be set to better organize your vault.
+- A **link to the printed PDF file** can be shown above the printed pages.
+- The **format for embedded images** can be set to allow for custom image widths and integrations with more specific workflows.
 
 ## Contributing
 
