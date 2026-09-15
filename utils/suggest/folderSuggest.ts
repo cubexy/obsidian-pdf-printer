@@ -1,25 +1,28 @@
-import { AbstractInputSuggest, App, Setting } from "obsidian";
+import { AbstractInputSuggest, App } from "obsidian";
 
 export class FolderSuggest extends AbstractInputSuggest<string> {
 	private folders: string[];
 
-	constructor(app: App, public inputEl: HTMLInputElement) {
+	constructor(
+		app: App,
+		public inputEl: HTMLInputElement,
+	) {
 		super(app, inputEl);
 		// Get all folders and include root folder
 		this.folders = ["/"].concat(
-			this.app.vault.getAllFolders().map((folder) => folder.path)
+			this.app.vault.getAllFolders().map((folder) => folder.path),
 		);
 	}
 
 	getSuggestions(inputStr: string): string[] {
 		const inputLower = inputStr.toLowerCase();
 		return this.folders.filter((folder) =>
-			folder.toLowerCase().includes(inputLower)
+			folder.toLowerCase().includes(inputLower),
 		);
 	}
 
 	renderSuggestion(folder: string, el: HTMLElement): void {
-		el.createEl("div", { text: folder });
+		el.createDiv({ text: folder });
 	}
 
 	selectSuggestion(folder: string): void {

@@ -1,18 +1,11 @@
 import { BrowserCanvasFactory } from "utils/canvas/canvasFactory";
-import {
-	Editor,
-	MarkdownView,
-	Notice,
-	Plugin,
-	TFile,
-	loadPdfJs,
-} from "obsidian";
+import { Editor, Notice, Plugin, TFile, loadPdfJs } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_SETTINGS, PdfPrinterSettingsTab } from "modules/settings";
 import { PdfDocumentBuffer, PdfPage, PdfPrinterSettings } from "modules/types";
 
 export default class PdfPrinterPlugin extends Plugin {
-	settings: PdfPrinterSettings;
+	settings!: PdfPrinterSettings;
 
 	async onload() {
 		await this.loadSettings();
@@ -20,7 +13,7 @@ export default class PdfPrinterPlugin extends Plugin {
 		this.addCommand({
 			id: "convert-pdf-to-images",
 			name: "Convert PDF to images",
-			editorCallback: async (editor: Editor, view: MarkdownView) => {
+			editorCallback: async (editor: Editor) => {
 				const selectedText = editor.getSelection();
 				const pdfFile = this.fetchFileFromMdPath(selectedText);
 				if (!pdfFile) {
@@ -35,7 +28,7 @@ export default class PdfPrinterPlugin extends Plugin {
 
 				if (imagePathList.length === 0) {
 					new Notice(
-						"No images could be generated from the document."
+						"No images could be generated from the document.",
 					);
 					return;
 				}
@@ -44,8 +37,8 @@ export default class PdfPrinterPlugin extends Plugin {
 					.map((imagePath) =>
 						this.settings.imageEmbedFormat.replace(
 							"${filename}",
-							imagePath
-						)
+							imagePath,
+						),
 					)
 					.join("\n");
 
@@ -56,7 +49,7 @@ export default class PdfPrinterPlugin extends Plugin {
 				editor.replaceSelection(replacementText);
 
 				new Notice(
-					`Document '${pdfFile.name}' was printed successfully.`
+					`Document '${pdfFile.name}' was printed successfully.`,
 				);
 			},
 		});
@@ -67,7 +60,7 @@ export default class PdfPrinterPlugin extends Plugin {
 		this.settings = Object.assign(
 			{},
 			DEFAULT_SETTINGS,
-			await this.loadData()
+			await this.loadData(),
 		);
 	}
 
@@ -103,7 +96,7 @@ export default class PdfPrinterPlugin extends Plugin {
 		const filePath = this.checkPathInput(path);
 		if (!filePath) {
 			new Notice(
-				`Invalid file path: ${path}. Please highlight a valid PDF file ![[link.pdf]].`
+				`Invalid file path: ${path}. Please highlight a valid PDF file ![[link.pdf]].`,
 			);
 			return null;
 		}
@@ -143,11 +136,11 @@ export default class PdfPrinterPlugin extends Plugin {
 			const { canvas, context } = canvasFactory.create(
 				viewport.width,
 				viewport.height,
-				false
+				false,
 			);
 			if (!canvas || !context) {
 				console.error(
-					"pdf-printer: could not generate canvas or context"
+					"pdf-printer: could not generate canvas or context",
 				);
 				return [];
 			}
@@ -157,7 +150,7 @@ export default class PdfPrinterPlugin extends Plugin {
 				canvas.toBlob(
 					resolve,
 					"image/webp",
-					this.settings.imageQuality
+					this.settings.imageQuality,
 				);
 			});
 
@@ -168,7 +161,7 @@ export default class PdfPrinterPlugin extends Plugin {
 				});
 			} else {
 				console.error(
-					`pdf-printer: could not generate blob for page ${i}`
+					`pdf-printer: could not generate blob for page ${i}`,
 				);
 			}
 			canvasFactory.destroy({ canvas, context });
@@ -184,18 +177,18 @@ export default class PdfPrinterPlugin extends Plugin {
 	 * @returns The path of the saved PNG file.
 	 */
 	private async convertPdfBufferToImages(
-		pdfBuffer: PdfDocumentBuffer
+		pdfBuffer: PdfDocumentBuffer,
 	): Promise<string[]> {
 		let uuid = uuidv4();
 		while (
 			this.app.vault.getFileByPath(
-				`${this.settings.imageFolder}/${uuid}`
+				`${this.settings.imageFolder}/${uuid}`,
 			) !== null
 		) {
 			uuid = uuidv4(); // if folder already exists (???), generate a new uuid
 		}
 		await this.app.vault.createFolder(
-			`${this.settings.imageFolder}/${uuid}`
+			`${this.settings.imageFolder}/${uuid}`,
 		);
 		const writeTasks = pdfBuffer.pages.map(async (page) => {
 			const fileName = `${pdfBuffer.fileName}-${page.pageNumber}.webp`;

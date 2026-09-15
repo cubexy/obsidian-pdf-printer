@@ -7,9 +7,9 @@ export class BrowserCanvasFactory {
 	create(
 		width: number,
 		height: number,
-		transparent: boolean
+		transparent: boolean,
 	): CanvasWithContext {
-		const canvas = document.createElement("canvas");
+		const canvas = createEl("canvas");
 		canvas.width = width;
 		canvas.height = height;
 		const context = canvas.getContext("2d", { alpha: transparent });
@@ -23,7 +23,7 @@ export class BrowserCanvasFactory {
 	reset(
 		canvasAndContext: CanvasWithContext,
 		width: number,
-		height: number
+		height: number,
 	): void {
 		if (!canvasAndContext.canvas) {
 			throw new Error("Canvas is not specified");
