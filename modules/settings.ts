@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: PdfPrinterSettings = {
 	imageQuality: 0.5,
 	imageEmbedFormat: "![[${filename}]]",
 	preservePdfLink: false,
+	newlineBetweenPages: false,
 };
 
 export class PdfPrinterSettingsTab extends PluginSettingTab {
@@ -77,6 +78,20 @@ export class PdfPrinterSettingsTab extends PluginSettingTab {
 						this.plugin.settings.imageEmbedFormat = value;
 						await this.plugin.saveSettings();
 					});
+			});
+
+		new Setting(this.containerEl)
+			.setName("Newline between images")
+			.setDesc(
+				"Insert a newline between pasted images to allow for easier writing between images.",
+			)
+			.addToggle((cb) => {
+				cb.setValue(this.plugin.settings.newlineBetweenPages).onChange(
+					async (value) => {
+						this.plugin.settings.newlineBetweenPages = value;
+						await this.plugin.saveSettings();
+					},
+				);
 			});
 	}
 }

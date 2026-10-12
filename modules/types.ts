@@ -3,6 +3,7 @@ export interface PdfPrinterSettings {
 	imageQuality: number;
 	imageEmbedFormat: string;
 	preservePdfLink: boolean;
+	newlineBetweenPages: boolean;
 }
 
 export type PdfDocumentBuffer = {

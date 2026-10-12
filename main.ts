@@ -33,6 +33,10 @@ export default class PdfPrinterPlugin extends Plugin {
 					return;
 				}
 
+				const newline = this.settings.newlineBetweenPages
+					? "\n\n"
+					: "\n";
+
 				const imageLinks = imagePathList
 					.map((imagePath) =>
 						this.settings.imageEmbedFormat.replace(
@@ -40,7 +44,7 @@ export default class PdfPrinterPlugin extends Plugin {
 							imagePath,
 						),
 					)
-					.join("\n");
+					.join(newline);
 
 				const replacementText = this.settings.preservePdfLink
 					? `[[${pdfFile.path}]]\n${imageLinks}`
