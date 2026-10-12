@@ -2,6 +2,7 @@ import { BrowserCanvasFactory } from "utils/canvas/canvasFactory";
 import { Editor, Notice, Plugin, TFile, loadPdfJs } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_SETTINGS, PdfPrinterSettingsTab } from "modules/settings";
+import { registerPdfPreview } from "modules/pdfPreview";
 import { PdfDocumentBuffer, PdfPage, PdfPrinterSettings } from "modules/types";
 
 export default class PdfPrinterPlugin extends Plugin {
@@ -19,38 +20,9 @@ export default class PdfPrinterPlugin extends Plugin {
 				if (!pdfFile) {
 					return;
 				}
-				new Notice(`Printing document '${pdfFile.name}'...`);
-				const fileBufferArray = await this.parsePdf(pdfFile);
-				const imagePathList = await this.convertPdfBufferToImages({
-					fileName: pdfFile.basename,
-					pages: fileBufferArray,
-				});
-
-				if (imagePathList.length === 0) {
-					new Notice(
-						"No images could be generated from the document.",
-					);
-					return;
-				}
-
-				const newline = this.settings.newlineBetweenPages
-					? "\n\n"
-					: "\n";
-
-				const imageLinks = imagePathList
-					.map((imagePath) =>
-						this.settings.imageEmbedFormat.replace(
-							"${filename}",
-							imagePath,
-						),
-					)
-					.join(newline);
-
-				const replacementText = this.settings.preservePdfLink
-					? `[[${pdfFile.path}]]\n${imageLinks}`
-					: `\n${imageLinks}`;
-
-				editor.replaceSelection(replacementText);
+				const printedText = await this.printPdf(pdfFile);
+				if (printedText === null) return;
+				editor.replaceSelection(printedText);
 
 				new Notice(
 					`Document '${pdfFile.name}' was printed successfully.`,
@@ -58,6 +30,27 @@ export default class PdfPrinterPlugin extends Plugin {
 			},
 		});
 		this.addSettingTab(new PdfPrinterSettingsTab(this.app, this));
+		registerPdfPreview(this, (file) => this.printPdf(file));
+	}
+
+	private async printPdf(file: TFile): Promise<string | null> {
+		new Notice(`Printing document '${file.name}'...`);
+		const pages = await this.parsePdf(file);
+		if (pages.length === 0) {
+			new Notice("No images could be generated from the document.");
+			return null;
+		}
+		const imagePaths = await this.convertPdfBufferToImages({
+			fileName: file.basename,
+			pages,
+		});
+		const newline = this.settings.newlineBetweenPages ? "\n\n" : "\n";
+		const imageLinks = imagePaths.map((path) =>
+			this.settings.imageEmbedFormat.replace("${filename}", path),
+		).join(newline);
+		return this.settings.preservePdfLink
+			? `[[${file.path}]]\n${imageLinks}`
+			: `\n${imageLinks}`;
 	}
 
 	async loadSettings() {

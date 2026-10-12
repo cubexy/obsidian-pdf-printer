@@ -14,7 +14,7 @@
 
 - Convert PDF documents into WEBP images inside Obsidian
 - Batch conversion of multi-page PDFs
-- Simple command to trigger conversion
+- Simple command to trigger conversion (or use button directly in PDF preview!)
 - User-definable image quality
 
 ## Installation
@@ -31,9 +31,16 @@ PDF Printer was added to the official community plugins! Just search for "PDF Pr
 
 ## Usage
 
+### From command palette
+
 1. Select a link to a `![[file.pdf]]`
 2. Open the Command Palette and run **PDF Printer: Convert PDF to images**
 3. Images will be generated, saved in a seperate folder and the PDF link will be replaced with the WEBP image links for the pages
+
+### From native PDF preview
+
+1. Click "…" and click on "Print PDF"
+2. Same as the command palette; images will be generated and saved!
 
 ## Configuration
 
