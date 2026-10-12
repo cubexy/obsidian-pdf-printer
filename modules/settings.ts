@@ -23,6 +23,20 @@ export class PdfPrinterSettingsTab extends PluginSettingTab {
 		const { containerEl } = this;
 		containerEl.empty();
 
+		new Setting(this.containerEl)
+			.setName("Printed image folder path")
+			.setDesc("Place printed images from PDFs in this folder.")
+			.addSearch((cb) => {
+				new FolderSuggest(this.app, cb.inputEl);
+				cb.setPlaceholder("Example: folder1/folder2")
+					.setValue(this.plugin.settings.imageFolder)
+					.onChange(async (new_folder) => {
+						this.plugin.settings.imageFolder =
+							normalizePath(new_folder);
+						await this.plugin.saveSettings();
+					});
+			});
+
 		new Setting(containerEl)
 			.setName("Image quality")
 			.setDesc(
@@ -39,15 +53,15 @@ export class PdfPrinterSettingsTab extends PluginSettingTab {
 			});
 
 		new Setting(this.containerEl)
-			.setName("Printed image folder path")
-			.setDesc("Place printed images from PDFs in this folder.")
-			.addSearch((cb) => {
-				new FolderSuggest(this.app, cb.inputEl);
-				cb.setPlaceholder("Example: folder1/folder2")
-					.setValue(this.plugin.settings.imageFolder)
-					.onChange(async (new_folder) => {
-						this.plugin.settings.imageFolder =
-							normalizePath(new_folder);
+			.setName("Image embed format")
+			.setDesc(
+				"Format for embedding images in the markdown file. Use ${filename} as a placeholder for the image file name.",
+			)
+			.addText((cb) => {
+				cb.setPlaceholder("![[${filename}]]")
+					.setValue(this.plugin.settings.imageEmbedFormat)
+					.onChange(async (value) => {
+						this.plugin.settings.imageEmbedFormat = value;
 						await this.plugin.saveSettings();
 					});
 			});
@@ -64,20 +78,6 @@ export class PdfPrinterSettingsTab extends PluginSettingTab {
 						await this.plugin.saveSettings();
 					},
 				);
-			});
-
-		new Setting(this.containerEl)
-			.setName("Image embed format")
-			.setDesc(
-				"Format for embedding images in the markdown file. Use ${filename} as a placeholder for the image file name.",
-			)
-			.addText((cb) => {
-				cb.setPlaceholder("![[${filename}]]")
-					.setValue(this.plugin.settings.imageEmbedFormat)
-					.onChange(async (value) => {
-						this.plugin.settings.imageEmbedFormat = value;
-						await this.plugin.saveSettings();
-					});
 			});
 
 		new Setting(this.containerEl)
