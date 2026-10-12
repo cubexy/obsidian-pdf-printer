@@ -39,6 +39,8 @@ PDF Printer was added to the official community plugins! Just search for "PDF Pr
 
 ### From native PDF preview
 
+<img width="300" alt="Context menu for printing PDFs" src="https://github.com/user-attachments/assets/bcf81b4f-b292-44fc-9fba-b35e69766c53" />
+
 1. Click "…" and click on "Print PDF"
 2. Same as the command palette; images will be generated and saved!
 
