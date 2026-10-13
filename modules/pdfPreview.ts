@@ -19,7 +19,7 @@ type PdfEmbedWidget = { start: number; end: number; sourcePath: string };
 // Keep native-view compatibility details out of the PDF conversion pipeline
 export function registerPdfPreview(
 	plugin: Plugin,
-	printPdf: (file: TFile) => Promise<string | null>,
+	printPdf: (file: TFile, promptForRange?: boolean) => Promise<string | null>,
 ): void {
 	const { app } = plugin;
 	const contexts = new WeakMap<
@@ -57,9 +57,15 @@ export function registerPdfPreview(
 				return;
 			menu.addItem((item) =>
 				item
-					.setTitle("Print PDF")
+					.setTitle("PDF Printer: Print to images")
 					.setIcon("printer")
 					.onClick(() => printEmbed(file, embed)),
+			);
+			menu.addItem((item) =>
+				item
+					.setTitle("PDF Printer: Print page ranges to images")
+					.setIcon("printer")
+					.onClick(() => printEmbed(file, embed, true)),
 			);
 		}),
 	);
@@ -182,7 +188,7 @@ export function registerPdfPreview(
 		return { view, file, from, to };
 	}
 
-	async function printEmbed(file: TFile, embed: HTMLElement): Promise<void> {
+	async function printEmbed(file: TFile, embed: HTMLElement, promptForRange = false): Promise<void> {
 		if (printingFiles.has(file.path)) return;
 		printingFiles.add(file.path);
 		try {
@@ -191,7 +197,7 @@ export function registerPdfPreview(
 				new Notice("Could not locate this PDF embed in the note.");
 				return;
 			}
-			const text = await printPdf(file);
+			const text = await printPdf(file, promptForRange);
 			if (text === null) return;
 			const replacement = text.replace(/^\n/, "");
 			if (

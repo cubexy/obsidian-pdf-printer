@@ -3,6 +3,7 @@ import { Editor, Notice, Plugin, TFile, loadPdfJs } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_SETTINGS, PdfPrinterSettingsTab } from "modules/settings";
 import { registerPdfPreview } from "modules/pdfPreview";
+import { promptForPageRange } from "modules/pageRangeModal";
 import { PdfDocumentBuffer, PdfPage, PdfPrinterSettings } from "modules/types";
 
 export default class PdfPrinterPlugin extends Plugin {
@@ -14,28 +15,29 @@ export default class PdfPrinterPlugin extends Plugin {
 		this.addCommand({
 			id: "convert-pdf-to-images",
 			name: "Convert PDF to images",
-			editorCallback: async (editor: Editor) => {
-				const selectedText = editor.getSelection();
-				const pdfFile = this.fetchFileFromMdPath(selectedText);
-				if (!pdfFile) {
-					return;
-				}
-				const printedText = await this.printPdf(pdfFile);
-				if (printedText === null) return;
-				editor.replaceSelection(printedText);
-
-				new Notice(
-					`Document '${pdfFile.name}' was printed successfully.`,
-				);
-			},
+			editorCallback: (editor: Editor) => this.printSelection(editor),
+		});
+		this.addCommand({
+			id: "convert-pdf-page-ranges-to-images",
+			name: "Convert PDF page ranges to images",
+			editorCallback: (editor: Editor) => this.printSelection(editor, true),
 		});
 		this.addSettingTab(new PdfPrinterSettingsTab(this.app, this));
-		registerPdfPreview(this, (file) => this.printPdf(file));
+		registerPdfPreview(this, (file, promptForRange) => this.printPdf(file, promptForRange));
 	}
 
-	private async printPdf(file: TFile): Promise<string | null> {
-		new Notice(`Printing document '${file.name}'...`);
-		const pages = await this.parsePdf(file);
+	private async printSelection(editor: Editor, promptForRange = false): Promise<void> {
+		const pdfFile = this.fetchFileFromMdPath(editor.getSelection());
+		if (!pdfFile) return;
+		const printedText = await this.printPdf(pdfFile, promptForRange);
+		if (printedText === null) return;
+		editor.replaceSelection(printedText);
+		new Notice(`Document '${pdfFile.name}' was printed successfully.`);
+	}
+
+	private async printPdf(file: TFile, promptForRange = false): Promise<string | null> {
+		const pages = await this.parsePdf(file, promptForRange);
+		if (pages === null) return null;
 		if (pages.length === 0) {
 			new Notice("No images could be generated from the document.");
 			return null;
@@ -117,16 +119,25 @@ export default class PdfPrinterPlugin extends Plugin {
 	 * @throws Error if the canvas or context cannot be created.
 	 * @returns An array of strings representing the paths of the saved PNG images.
 	 */
-	async parsePdf(file: TFile): Promise<PdfPage[]> {
+	async parsePdf(file: TFile, promptForRange = false): Promise<PdfPage[] | null> {
 		const pdfjs = await loadPdfJs();
 		const arrayBuffer = await this.app.vault.readBinary(file);
 		const buffer = new Uint8Array(arrayBuffer);
 		const document = await pdfjs.getDocument(buffer).promise;
 
 		const pages: number = document.numPages;
+		const selectedPages = promptForRange
+			? await promptForPageRange(this.app, pages)
+			: undefined;
+		if (selectedPages === null) {
+			await document.destroy();
+			return null;
+		}
+		new Notice(`Printing document '${file.name}'...`);
 		const pdfBuffer: PdfPage[] = [];
 
 		for (let i = 1; i <= pages; i++) {
+			if (selectedPages && !selectedPages.includes(i)) continue;
 			const page = await document.getPage(i);
 			const viewport = page.getViewport({ scale: 2 });
 			const canvasFactory = new BrowserCanvasFactory();
