@@ -37,20 +37,27 @@ export class PdfPrinterSettingsTab extends PluginSettingTab {
 					});
 			});
 
-		new Setting(containerEl)
+		const imageQualitySetting = new Setting(containerEl)
 			.setName("Image quality")
 			.setDesc(
 				"Quality of the printed images. Higher values result in better quality but larger file sizes.",
-			)
-			.addSlider((cb) => {
-				cb.setLimits(0, 1, 0.01)
-					.setValue(this.plugin.settings.imageQuality)
-					.setDynamicTooltip()
-					.onChange(async (value) => {
-						this.plugin.settings.imageQuality = value;
-						await this.plugin.saveSettings();
-					});
-			});
+			);
+		const sizeHintText = (q: number) =>
+			`${q} results in approx. ${(2.24 + (9.8 * q) / (q + 0.7) + 16.5 * q ** 20).toFixed(1)} MB per 100 slides.`; //approximated from 350 random lecture slides from my lectures
+		const sizeHint = imageQualitySetting.descEl.createDiv({
+			text: sizeHintText(this.plugin.settings.imageQuality),
+		});
+		imageQualitySetting.addSlider((cb) => {
+			cb.setLimits(0, 1, 0.01)
+				.setInstant(true)
+				.setValue(this.plugin.settings.imageQuality)
+				.setDynamicTooltip()
+				.onChange(async (value) => {
+					this.plugin.settings.imageQuality = value;
+					sizeHint.setText(sizeHintText(value));
+					await this.plugin.saveSettings();
+				});
+		});
 
 		new Setting(this.containerEl)
 			.setName("Image embed format")
