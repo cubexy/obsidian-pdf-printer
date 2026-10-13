@@ -1,4 +1,5 @@
 import { BrowserCanvasFactory } from "utils/canvas/canvasFactory";
+import { formatPrintedPages } from "utils/formatPrintedPages";
 import { Editor, Notice, Plugin, TFile, loadPdfJs } from "obsidian";
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_SETTINGS, PdfPrinterSettingsTab } from "modules/settings";
@@ -46,13 +47,7 @@ export default class PdfPrinterPlugin extends Plugin {
 			fileName: file.basename,
 			pages,
 		});
-		const newline = this.settings.newlineBetweenPages ? "\n\n" : "\n";
-		const imageLinks = imagePaths.map((path) =>
-			this.settings.imageEmbedFormat.replace("${filename}", path),
-		).join(newline);
-		return this.settings.preservePdfLink
-			? `[[${file.path}]]\n${imageLinks}`
-			: `\n${imageLinks}`;
+		return formatPrintedPages(file.path, imagePaths, this.settings);
 	}
 
 	async loadSettings() {
