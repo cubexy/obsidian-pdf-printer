@@ -42,9 +42,9 @@ To print only selected pages, run **PDF Printer: Convert PDF page ranges to imag
 
 ### From native PDF preview
 
-<img width="300" alt="Context menu for printing PDFs" src="https://github.com/user-attachments/assets/bcf81b4f-b292-44fc-9fba-b35e69766c53" />
+<img width="700" alt="Context menu for printing PDFs" src="https://github.com/user-attachments/assets/0f550dc5-96f9-40fb-a7ca-01dc23851694" />
 
-1. Click "…" and click on "Print PDF"
+1. Click "…" and click on "Print to images" or "Print page range to images".
 2. Same as the command palette; images will be generated and saved!
 
 ## Configuration
